@@ -19,3 +19,16 @@ export class NotificationService {
     private queueService: NotificationQueueService,
     private templateService: NotificationTemplateService,
   ) {}
+
+  async createNotification(data: CreateNotificationDto): Promise<Notification> {
+    const notification = this.notificationRepo.create({
+      ...data,
+      scheduledAt: data.scheduledAt || new Date(),
+      expiresAt: data.expiresAt || this.calculateExpiry(data.type),
+    });
+
+    await this.notificationRepo.save(notification);
+    await this.queueService.scheduleNotification(notification);
+
+    return notification;
+  }
