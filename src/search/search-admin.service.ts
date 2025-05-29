@@ -1,10 +1,18 @@
+import { Logger } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Inject } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { SearchConfiguration } from '../entities/search-configuration.entity'; // Adjust the path as needed
+import { SearchQueryLog } from '../entities/search-query-log.entity'; // Adjust the path as needed
+import { SearchMonitoringService } from '../services/search-monitoring.service'; // Adjust the path as needed
+
 @Injectable()
 export class SearchAdminService {
   private readonly logger = new Logger(SearchAdminService.name);
 
   constructor(
     @InjectRepository(SearchConfiguration)
-    private configRepository: Repository<SearchConfiguration>,
+    @Inject(getRepositoryToken(SearchQueryLog))
     @InjectRepository(SearchQueryLog)
     private queryLogRepository: Repository<SearchQueryLog>,
     private searchIndexService: SearchIndexService,
@@ -87,4 +95,11 @@ export class SearchAdminService {
     
     this.logger.log(`Updated search weights for ${entityName}`);
   }
+}
+
+function InjectRepository(SearchConfiguration: any): (target: typeof SearchAdminService, propertyKey: undefined, parameterIndex: 0) => void {
+    throw new Error('Function not implemented.');
+}
+function InjectRepository(entity: Function): ParameterDecorator {
+    return Inject(getRepositoryToken(entity));
 }
