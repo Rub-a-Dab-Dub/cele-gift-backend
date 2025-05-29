@@ -32,3 +32,18 @@ export class NotificationService {
 
     return notification;
   }
+  async createBulkNotifications(notifications: CreateNotificationDto[]): Promise<void> {
+    await this.notificationRepo.manager.transaction(async manager => {
+      const processedNotifications = notifications.map(n => ({
+        ...n,
+        scheduledAt: n.scheduledAt || new Date(),
+        expiresAt: n.expiresAt || this.calculateExpiry(n.type),
+      }));
+
+      const savedNotifications = await manager.save(Notification, processedNotifications);
+      
+      for (const notification of savedNotifications) {
+        await this.queueService.scheduleNotification(notification);
+      }
+    });
+  }
