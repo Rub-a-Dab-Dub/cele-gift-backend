@@ -44,6 +44,31 @@ export class NotificationService {
       
       for (const notification of savedNotifications) {
         await this.queueService.scheduleNotification(notification);
-      }
+      }async getNotificationsForUser(
+        userId: string, 
+        options: GetNotificationsDto
+      ): Promise<PaginatedResult<Notification>> {
+        const queryBuilder = this.notificationRepo
+          .createQueryBuilder('n')
+          .leftJoinAndSelect('n.deliveries', 'd')
+          .where('n.userId = :userId', { userId })
+          .andWhere('n.expiresAt > :now', { now: new Date() });
+    
+        if (options.type) {
+          queryBuilder.andWhere('n.type = :type', { type: options.type });
+        }
+    
+        if (options.unreadOnly) {
+          queryBuilder.andWhere('n.isRead = false');
+        }
+    
+        queryBuilder
+          .orderBy('n.createdAt', 'DESC')
+          .skip(options.offset)
+          .take(options.limit);
+    
+        const [notifications, total] = await queryBuilder.getManyAndCount();
+    
+        return {
     });
   }
