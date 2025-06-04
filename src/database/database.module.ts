@@ -8,12 +8,14 @@ import { DatabaseHealthService } from './services/database-health.service';
 import { DatabaseLoggerService } from './services/database-logger.service';
 import { ReadReplicaService } from './services/read-replica.service';
 import { DatabaseEnvironmentConfig } from './config/interfaces/database-config.interface';
+import { RelationshipManagementModule } from './relationship-management/relationship-management.module';
 
 @Global()
 @Module({
   imports: [
     ConfigModule.forFeature(databaseConfig),
     ScheduleModule.forRoot(),
+    RelationshipManagementModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
@@ -97,6 +99,7 @@ import { DatabaseEnvironmentConfig } from './config/interfaces/database-config.i
     DatabaseLoggerService,
     ReadReplicaService,
     TypeOrmModule,
+    RelationshipManagementModule,
   ],
 })
 export class DatabaseModule {}
