@@ -2,8 +2,8 @@ import { Logger } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { SearchConfiguration } from '../entities/search-configuration.entity'; // Adjust the path as needed
-import { SearchQueryLog } from '../entities/search-query-log.entity'; // Adjust the path as needed
+import { SearchConfiguration } from '../NFTPicture/entities/search-configuration.entity'; // Adjust the path as needed
+import { SearchQueryLog } from '../NFTPicture/entities/search-query-log.entity'; // Adjust the path as needed
 import { SearchMonitoringService } from '../services/search-monitoring.service'; // Adjust the path as needed
 
 @Injectable()
