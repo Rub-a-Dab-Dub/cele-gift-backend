@@ -1,5 +1,8 @@
 import { registerAs } from '@nestjs/config';
 import { DatabaseEnvironmentConfig } from './database-config.interface';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { PostgreSQLConfig } from '../types/postgres.types';
+
 
 export default registerAs('database', (): Record<string, DatabaseEnvironmentConfig> => {
   const environment = process.env.NODE_ENV || 'development';
@@ -168,3 +171,67 @@ export default registerAs('database', (): Record<string, DatabaseEnvironmentConf
 
   return configs[environment] ? { [environment]: configs[environment] } : { development: configs.development };
 });
+
+
+
+export class DatabaseConfig {
+  private static instance: DataSource;
+
+  static async createConnection(config: PostgreSQLConfig): Promise<DataSource> {
+    if (this.instance?.isInitialized) {
+      return this.instance;
+    }
+
+    const options: DataSourceOptions = {
+      type: 'postgres',
+      host: config.host,
+      port: config.port,
+      username: config.username,
+      password: config.password,
+      database: config.database,
+      schema: config.schema || 'public',
+      timezone: config.timezone || 'UTC',
+      ssl: config.ssl,
+      maxQueryExecutionTime: config.connectionTimeout || 30000,
+      entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
+      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+      synchronize: false,
+      logging: process.env.NODE_ENV === 'development',
+      extra: {
+        max: config.maxConnections || 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: config.connectionTimeout || 30000,
+      }
+    };
+
+    this.instance = new DataSource(options);
+    await this.instance.initialize();
+    
+    // Setup extensions after connection
+    await this.setupExtensions(config.extensions || []);
+    
+    return this.instance;
+  }
+
+  private static async setupExtensions(extensions: string[]): Promise<void> {
+    const queryRunner = this.instance.createQueryRunner();
+    
+    try {
+      for (const extension of extensions) {
+        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "${extension}"`);
+      }
+    } catch (error) {
+      console.warn(`Failed to setup extensions: ${error}`);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  static getConnection(): DataSource {
+    if (!this.instance?.isInitialized) {
+      throw new Error('Database connection not initialized');
+    }
+    return this.instance;
+  }
+}
+
