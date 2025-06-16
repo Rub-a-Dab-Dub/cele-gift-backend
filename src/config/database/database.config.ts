@@ -17,6 +17,7 @@ export default registerAs('database', (): Record<string, DatabaseEnvironmentConf
         database: process.env.DB_NAME || 'cele_gift_dev',
         ssl: false,
       },
+      readReplicas: [],
       poolConfig: {
         min: 2,
         max: 10,
